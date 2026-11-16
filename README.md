@@ -1,6 +1,10 @@
 # High-Quality Resilient Free-Model Aggregator
 
-An intelligent AI model aggregation and proxy server compliant with both OpenAI (`POST /v1/chat/completions`) and Anthropic (`POST /v1/messages`) APIs, routing to OpenRouter's free models with guaranteed optimal quality rating and resilient failover.
+[![make.fun · free-model-aggregator-02](https://make.fun/badge/free-model-aggregator-02.svg)](https://make.fun/bounty/free-model-aggregator-02?utm_source=github&utm_medium=readme&utm_campaign=free-model-aggregator-02)
+[![rank](https://make.fun/badge/free-model-aggregator-02/VincenzoT1/free-model-aggregator-02/rank.svg)](https://make.fun/bounty/free-model-aggregator-02/leaderboard?utm_source=github&utm_medium=readme&utm_campaign=free-model-aggregator-02)
+[![reward](https://make.fun/badge/free-model-aggregator-02/VincenzoT1/free-model-aggregator-02/reward.svg)](https://make.fun/bounty/free-model-aggregator-02?utm_source=github&utm_medium=readme&utm_campaign=free-model-aggregator-02)
+
+An intelligent AI model aggregation and proxy server compliant with both OpenAI (`POST /v1/chat/completions`) and Anthropic (`POST /v1/messages`) APIs, routing to OpenRouter's free models with guaranteed optimal quality rating and resilient failover for [make.fun bounty](https://make.fun/bounty/free-model-aggregator-02).
 
 ## Key Features
 
