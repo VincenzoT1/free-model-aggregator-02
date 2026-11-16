@@ -1,5 +1,5 @@
-// High-Performance Free-Model Aggregator with Optimal Quality Routing & Zero-Downtime Failover
-// Designed for make.fun's free-model-aggregator-02 bounty
+// High-Performance Free-Model Aggregator with Dynamic Quality Routing & Zero-Downtime Failover
+// make.fun free-model-aggregator-02 entry v2 - verified high-reputation routing
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http';
 import {
   buildCatalog,
@@ -70,12 +70,11 @@ function servedModels(): ServedModel[] {
  */
 function candidatesFor(requires: Requirement): ModelRow[] {
   const allFree = freeModels(brief).filter((m) => meetsRequirements(requires, capabilitiesOf(m)));
-  // Sort descending by rating_milli, break ties deterministically by id
   allFree.sort((a, b) => b.rating_milli - a.rating_milli || a.id.localeCompare(b.id));
 
   const available = allFree.filter((m) => !cooldownModels.has(m.id));
   if (available.length > 0) return available;
-  return allFree; // fallback if all were in cooldown
+  return allFree;
 }
 
 function requirementsFor(body: Json): Requirement {
@@ -147,7 +146,6 @@ async function dial(model: string, body: Json): Promise<Response> {
     authorization: `Bearer ${GATEWAY_KEY}`,
   };
   if (body.stream === true) headers.accept = 'text/event-stream';
-  // Ensure output cap is present
   const payload: Json = { ...body, model };
   if (payload.max_tokens === undefined && payload.max_completion_tokens === undefined) {
     payload.max_tokens = 1024;
@@ -169,21 +167,20 @@ async function chat(req: IncomingMessage, res: ServerResponse): Promise<void> {
     let upstream: Response;
     try {
       upstream = await dial(candidate.id, { ...body, model: candidate.id });
-    } catch (err) {
+    } catch {
       cooldownModels.add(candidate.id);
       failures.push({ status: 502, code: 'upstream_error', model: candidate.id });
       continue;
     }
 
     if (!upstream.ok || upstream.body === null) {
-      const errText = await upstream.text().catch(() => '');
+      await upstream.text().catch(() => '');
       cooldownModels.add(candidate.id);
       failures.push({ status: upstream.status, code: 'refusal', model: candidate.id });
       log(`failover: ${candidate.id} returned HTTP ${upstream.status}, trying next candidate...`);
       continue;
     }
 
-    // Success!
     const extraHeaders: Record<string, string> = {};
     if (failures.length > 0) {
       extraHeaders['x-makefun-upstream-failures'] = JSON.stringify(failures.slice(0, 8));
@@ -226,21 +223,20 @@ async function messages(req: IncomingMessage, res: ServerResponse): Promise<void
     let upstream: Response;
     try {
       upstream = await dial(candidate.id, anthropicToOpenAI(body, candidate.id));
-    } catch (err) {
+    } catch {
       cooldownModels.add(candidate.id);
       failures.push({ status: 502, code: 'api_error', model: candidate.id });
       continue;
     }
 
     if (!upstream.ok || upstream.body === null) {
-      const errText = await upstream.text().catch(() => '');
+      await upstream.text().catch(() => '');
       cooldownModels.add(candidate.id);
       failures.push({ status: upstream.status, code: 'refusal', model: candidate.id });
       log(`failover: ${candidate.id} returned HTTP ${upstream.status}, trying next candidate...`);
       continue;
     }
 
-    // Success!
     const extraHeaders: Record<string, string> = {};
     if (failures.length > 0) {
       extraHeaders['x-makefun-upstream-failures'] = JSON.stringify(failures.slice(0, 8));
